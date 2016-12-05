@@ -16,8 +16,10 @@ typedef struct aluno
 	//NPU = numero de periodos na universidade, CHT = carga horária total
 	//CHCS = carga horaria cursada com sucesso, ntranc = numero de trancamentos
 	//cur = tipo do curriculo
-	int CHCS, NPU, ntranc,cur;
-	struct aluno *ant, *prox, *pai, *filhos;
+	int CHCS, NPU, ntranc,cur,nchaves;
+	//variavel que guarda as infos no mesmo "array"
+	struct aluno **infos;
+	struct aluno *ant, *prox, *pai, **filhos;
 }TNO;
 
 TNO *inicializa_no()
@@ -36,8 +38,21 @@ TNO *cria_aluno()
 	aluno->NPU = 0;
 	aluno->cur = -1;
 	aluno->folha = 0;
-	aluno->prox = aluno->ant = aluno->pai = aluno->filhos = NULL;
+	aluno->infos = NULL;
+	aluno->prox = aluno->ant = aluno->pai = NULL;
+	aluno->filhos = NULL;
 	return aluno;
+}
+
+TNO *busca(TNO *raiz, int x)
+{
+	if(!raiz) return raiz;
+	int i;
+	TNO *resp = NULL;
+	while(i < raiz->nchaves && x > raiz->infos[i]->mat) i++;
+	if( i < raiz->nchaves && x == raiz->infos[i]->mat) return raiz;
+	if(raiz->folha) return resp;
+	return busca(raiz->filhos[i],x);
 }
 
 TCur *cria_curriculos()
