@@ -70,6 +70,7 @@ TNO *insere(TNO *raiz, int mat, float cr, int cur, int t)
 	if(raiz->infos[0] == NULL)
 	{
 		raiz->infos[0] = cria_aluno(mat, cr, cur);
+		raiz->nchaves = 1;
 		resp = raiz;
 	}
 	return resp;
@@ -79,7 +80,6 @@ TNO *busca(TNO *raiz, int x)
 {
 	if(!raiz) return raiz;
 	int i;
-	TNO *resp = NULL;
 	while(i < raiz->nchaves && x > raiz->infos[i]->mat) i++;
 	if(raiz->folha && i < raiz->nchaves && x == raiz->infos[i]->mat) return raiz;
 	return busca(raiz->filhos[i],x);
@@ -115,7 +115,8 @@ int main (void)
 	TNO *raiz = cria_no(t);
 	raiz->folha = 1;
 	raiz = insere(raiz,3,3.5,1,t);
-	printf("raiz %d",raiz->infos[0]->mat);
+	TNO *x = busca(raiz,3);
+	printf("raiz %d",x->infos[0]->mat);
 	free(curriculos);
 	return 0;
 }
