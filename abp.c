@@ -1,6 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+typedef struct no
+{
+	int nchaves;
+	int folha;
+	struct no *pai;
+	struct no **filhos;
+	struct info **infos;
+}TNO;
+
 typedef struct curriculo
 {
 	//CHT = carga horaria total, ntotper = maximo de periodos do curriculo, tnc = tempo normal de curso
@@ -8,40 +17,62 @@ typedef struct curriculo
 }TCur;
 
 
-typedef struct aluno
+typedef struct info
 {
 	int mat;
-	int folha;
 	float cr;
 	//NPU = numero de periodos na universidade, CHT = carga horária total
 	//CHCS = carga horaria cursada com sucesso, ntranc = numero de trancamentos
 	//cur = tipo do curriculo
 	int CHCS, NPU, ntranc,cur,nchaves;
 	//variavel que guarda as infos no mesmo "array"
-	struct aluno **infos;
-	struct aluno *ant, *prox, *pai, **filhos;
-}TNO;
+	struct info *ant, *prox;
+}TInfo;
 
 TNO *inicializa_no()
 {
 	return NULL;
 }
 
-
-TNO *cria_aluno()
+//está dando erro ao inserir primeiro elemento
+TNO *cria_no(int t)
 {
-	TNO *aluno = (TNO*) malloc(sizeof(TNO));
-	aluno->cr = 0;
-	aluno->mat = 0;
+	TNO *no = (TNO*)malloc(sizeof(TNO));
+	no->pai = NULL;
+	no->folha = 0;
+	no->filhos = (TNO**)malloc(sizeof(TNO) * (2 * t - 1));
+	no->infos= (TInfo**)malloc(sizeof(TInfo) * (2 * t - 1));
+	int i;
+	for(i = 0; i < 2 * t-1; i++)
+	{
+		no->filhos[i] = NULL;
+		no->infos[i] = NULL;
+	}
+	return no;
+}
+
+TInfo *cria_aluno(int mat, int cr, int cur)
+{
+	TInfo *aluno = (TInfo*) malloc(sizeof(TInfo));
+	aluno->mat = mat;
+	aluno->cr = cr;
 	aluno->ntranc = 0;
 	aluno->CHCS = 0;
 	aluno->NPU = 0;
-	aluno->cur = -1;
-	aluno->folha = 0;
-	aluno->infos = NULL;
-	aluno->prox = aluno->ant = aluno->pai = NULL;
-	aluno->filhos = NULL;
+	aluno->cur = cur;
+	aluno->prox = aluno->ant = NULL;
 	return aluno;
+}
+
+TNO *insere(TNO *raiz, int mat, float cr, int cur, int t)
+{
+	TNO *resp;
+	if(raiz->infos[0] == NULL)
+	{
+		raiz->infos[0] = cria_aluno(mat, cr, cur);
+		resp = raiz;
+	}
+	return resp;
 }
 
 TNO *busca(TNO *raiz, int x)
@@ -50,8 +81,7 @@ TNO *busca(TNO *raiz, int x)
 	int i;
 	TNO *resp = NULL;
 	while(i < raiz->nchaves && x > raiz->infos[i]->mat) i++;
-	if( i < raiz->nchaves && x == raiz->infos[i]->mat) return raiz;
-	if(raiz->folha) return resp;
+	if(raiz->folha && i < raiz->nchaves && x == raiz->infos[i]->mat) return raiz;
 	return busca(raiz->filhos[i],x);
 }
 
@@ -75,17 +105,17 @@ TCur *cria_curriculos()
 	return curs;
 }
 
-
 int main (void)
 {
 	TCur *curriculos = cria_curriculos();
 	
 	int t;
 	printf("insira o valor de T:\n");
-
 	scanf("%d",&t);
-	TNO *raiz = inicializa_no();
-
+	TNO *raiz = cria_no(t);
+	raiz->folha = 1;
+	raiz = insere(raiz,3,3.5,1,t);
+	printf("raiz %d",raiz->infos[0]->mat);
 	free(curriculos);
 	return 0;
 }
