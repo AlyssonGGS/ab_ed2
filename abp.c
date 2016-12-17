@@ -23,7 +23,8 @@ typedef struct info
 {
 	int mat;
 	float cr;
-	//NPU = numero de periodos na universidade, CHT = carga horária total
+	char *nome;
+	//NPU = numero de periodos na universidade
 	//CHCS = carga horaria cursada com sucesso, ntranc = numero de trancamentos
 	//cur = tipo do curriculo
 	int CHCS, NPU, ntranc,cur,nchaves;
@@ -46,8 +47,10 @@ void libera(TAB *a)
 			libera(a->filho[i]);
 		 
 		for(i = 0; i < a->nchaves;i++)
+		{
+			free(a->info[i]->nome);
 			free(a->info[i]);
-		
+		}
 		free(a);
 	}
 }
@@ -73,7 +76,7 @@ TAB *cria_no(int t)
 	return no;
 }
 
-TInfo *cria_aluno(int mat, int cr, int cur)
+TInfo *cria_aluno(int mat, int cr, int cur,char *nome)
 {
 	TInfo *aluno = (TInfo*) malloc(sizeof(TInfo));
 	aluno->mat = mat;
@@ -82,6 +85,8 @@ TInfo *cria_aluno(int mat, int cr, int cur)
 	aluno->CHCS = 0;
 	aluno->NPU = 0;
 	aluno->cur = cur;
+	aluno->nome = malloc(sizeof(char) * 50);
+	strcpy(aluno->nome,nome);
 	return aluno;
 }
 
@@ -140,7 +145,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 	return b;
 }
 
-TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, int t)
+TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
 {
 	int i = a->nchaves-1;
 	if(a->folha){
@@ -148,7 +153,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, int t)
 	  		a->info[i+1] = a->info[i];
 	  		i--;
 		}
-		a->info[i+1] = cria_aluno(mat,cr,cur);
+		a->info[i+1] = cria_aluno(mat,cr,cur,nome);
 		a->nchaves++;
 		return a;
 	}
@@ -158,10 +163,11 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, int t)
    		a = divide(a, (i+1), a->filho[i], t);
    	 	if(mat>a->info[i]->mat) i++;
   	}
-  	a->filho[i] = insere_incompleto(a->filho[i], mat,cr,cur, t);
+  	a->filho[i] = insere_incompleto(a->filho[i], mat,cr,cur, nome, t);
 	return a;
 }
-TAB *insere(TAB *raiz, int mat, float cr, int cur, int t)
+
+TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 {
 	printf("inserindo:%d\n",mat);
 	if(busca(raiz,mat))return raiz;
@@ -169,7 +175,7 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, int t)
 	{
 		raiz = cria_no(t);
 		raiz->folha = 1;
-		raiz->info[0] = cria_aluno(mat,cr,cur);
+		raiz->info[0] = cria_aluno(mat,cr,cur,nome);
 		raiz->nchaves++;
 		return raiz;
 	}
@@ -181,11 +187,11 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, int t)
 		b->folha = 0;
 		b->filho[0] = raiz;
 		b = divide(b,1,raiz,t);
-		b = insere_incompleto(b,mat,cr,cur,t);	
+		b = insere_incompleto(b,mat,cr,cur, nome,t);	
 		imprime(b,0);
 		return b;
 	}
-	raiz = insere_incompleto(raiz,mat,cr,cur,t);
+	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
 	imprime(raiz,0);
 	return raiz;
 }
@@ -210,6 +216,65 @@ TCur *cria_curriculos()
 	return curs;
 }
 
+int selecionaCurriculo(int cht, TCur *curs)
+{
+	int i;
+	long max = sizeof(curs)/sizeof(TCur);
+	while(i < max)
+	{
+		if(cht == curs[i].cht) return i;
+	}
+	return -1;
+}
+
+TAB *preenche(TAB *a,char *arq,int t,TCur *curs)
+{
+	FILE *fp = fopen(arq,"rt");
+	if(!fp)
+	{
+		printf("arquivo não aberto com sucesso");
+		exit(1);
+	}
+	int mat, tranc,chc,nper, cur;
+	float cr;
+	char linha[200];
+	while(fgets(linha,sizeof(linha),fp))
+	{
+		char *tok = strtok(linha," ");
+		mat = atoi(tok);
+		tok = strtok(NULL," ");
+		cr = atof(tok);
+		tok = strtok(linha," ");
+		tranc = atoi(tok);
+		tok = strtok(linha," ");
+		chc = atoi(tok);
+		tok = strtok(linha," ");
+		nper = atoi(tok);
+		tok = strtok(linha," ");
+		int cht = atoi(tok);
+		cur = selecionaCurriculo(cht,curs);
+		tok = strtok(linha," ");
+		a = insere(a,mat,cr,cur,tok,t);
+	}
+	/*while(r)
+	{
+		a = insere(a,mat,cr,selecionaCurriculo(cur,curs),nome,t);
+		TAB *temp = busca(a,mat);
+		int i;
+		for(i = 0; i < temp->nchaves; i++) 
+			if(temp->info[i]->mat == mat)
+			{
+				temp->info[i]->CHCS = chc;
+				temp->info[i]->ntranc = tranc;
+				temp->info[i]->NPU = nper;
+			}
+		r = fscanf(fp,"%d %f %d %d %d %d %s %s",&mat,&cr,&tranc,&chc,&nper,&cur,nome,sobrenome);
+		printf("NOME: %d\n",r);
+		//imprime(a,0);
+	}*/
+	return a;
+}
+
 int main (void)
 {
 	TCur *curriculos = cria_curriculos();
@@ -218,15 +283,16 @@ int main (void)
 	printf("insira o valor de T:\n");
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
+	preenche(raiz,"arq.txt",t,curriculos);
 	//raiz->folha = 1;
-	raiz = insere(raiz,3,3.5,1,t);
+	/*raiz = insere(raiz,3,3.5,1,t);
 	raiz = insere(raiz,5,3.5,1,t);
 	raiz = insere(raiz,9,3.5,1,t);
 	raiz = insere(raiz,20,3.5,1,t);
 	raiz = insere(raiz,4,3.5,1,t);
 	raiz = insere(raiz,1,3.5,1,t);
 	raiz = insere(raiz,0,3.5,1,t);
-	raiz = insere(raiz,21,3.5,1,t);
+	raiz = insere(raiz,21,3.5,1,t);*/
 	libera(raiz);
 	free(curriculos);
 	return 0;
