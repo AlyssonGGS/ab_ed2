@@ -224,6 +224,43 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 	return raiz;
 }
 
+TAB *retira(TAB *a,int mat,int t)
+{
+	int i;
+	for(i = 0; i< a->nchaves && a->info[i]->mat < mat; i++);
+	if(a->folha)
+	{
+		printf("é folha %d",t-1);
+		if(a->nchaves > t -1)//caso 1
+		{
+			printf("CASO 1");
+			int i;
+			for(i = 0; i < a->nchaves; i++)
+			{
+
+				printf("avalido o %d",a->info[i]->mat);
+				if(a->info[i]->mat == mat)
+				{
+					free(a->info[i]->nome);
+					free(a->info[i]);
+					a->info[i] = NULL;
+					break;
+				}
+			}
+			int j;
+			for(j = i; j < a->nchaves;j++)
+			{
+				a->info[j] = a->info[j+1];
+			}
+			a->nchaves--;
+		}
+		return a;
+	}
+	//tem que aplicar casos 3A e 3B para o filho onde o valor ṕode estar
+	a->filho[i] = retira(a->filho[i],mat,t);
+	return a;
+}
+
 TCur *cria_curriculos()
 {
 	TCur *curs = (TCur*)malloc(sizeof(TCur)*3);
@@ -337,12 +374,13 @@ int main (void)
 	raiz = preenche(raiz,"arq.txt",t,curriculos);
 	int i;
 	scanf("%d",&i);
-	
 	//loop para operar o programa
 	while(i != 0)
 	{
 		imprimeAluno(raiz,i,curriculos);
-		scanf("%d",&j);
+		retira(raiz,i,t);
+		imprime(raiz,0);
+		scanf("%d",&i);
 	}
 	libera(raiz);
 	free(curriculos);
