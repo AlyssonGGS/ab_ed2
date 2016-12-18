@@ -101,17 +101,49 @@ void imprime(TAB *a, int andar){
     	imprime(a->filho[i],andar+1);
 	}
 }
+
 TAB *busca(TAB *raiz, int x)
 {
 	//printf("buscando %d\n",x);
-	if(!raiz)
-		return raiz;
-	
+	if(!raiz)return raiz;
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
 	//printf("valor de mat:%d\n",raiz->info[i]->mat); 
 	if(i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
+}
+
+TInfo *buscaAluno(TAB *a,int mat)
+{
+	TAB *arv = busca(a,mat);
+	if(!arv)
+	{
+		printf("Informacao nao encontrada na arvore\n");
+		return NULL;
+	}
+	int i;
+	for(i = 0; i < arv->nchaves;i++)
+	{
+		if(arv->info[i]->mat == mat) return arv->info[i];
+	}
+	return NULL;
+}
+
+void imprimeAluno(TAB *a, int mat, TCur *curs)
+{
+	TInfo *aluno = buscaAluno(a,mat);
+	if(!aluno)
+	{
+		printf("Aluno nao encontrado");
+		return;	
+	}
+	printf("Aluno:%s\n",aluno->nome);
+	printf("Matricula: %d\n",aluno->mat);
+	printf("CR: %f\n",aluno->cr);
+	printf("Trancamentos: %d\n",aluno->ntranc);
+	printf("CHCS:%d\n",aluno->CHCS);
+	printf("NPU:%d\n",aluno->NPU);
+	printf("Curriculo:%d\n",curs[aluno->cur].cht);
 }
 
 TAB *divide(TAB *b,int i, TAB *a, int t)
@@ -169,7 +201,6 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
 
 TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 {
-	printf("inserindo:%d\n",mat);
 	if(busca(raiz,mat))return raiz;
 	if(!raiz) 
 	{
@@ -181,18 +212,15 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 	}
 	if((raiz->nchaves == 2 * t - 1))
 	{
-		printf("faz divisao\n");
 		TAB *b = cria_no(t);
 		b->nchaves=0;
 		b->folha = 0;
 		b->filho[0] = raiz;
 		b = divide(b,1,raiz,t);
 		b = insere_incompleto(b,mat,cr,cur, nome,t);	
-		imprime(b,0);
 		return b;
 	}
 	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
-	imprime(raiz,0);
 	return raiz;
 }
 
@@ -216,15 +244,9 @@ TCur *cria_curriculos()
 	return curs;
 }
 
-int selecionaCurriculo(int cht, TCur *curs)
+int selecionaCurriculo(int cht)
 {
-	int i;
-	long max = sizeof(curs)/sizeof(TCur);
-	while(i < max)
-	{
-		if(cht == curs[i].cht) return i;
-	}
-	return -1;
+	return cht-1;
 }
 
 TAB *preenche(TAB *a,char *arq,int t,TCur *curs)
@@ -244,35 +266,64 @@ TAB *preenche(TAB *a,char *arq,int t,TCur *curs)
 		mat = atoi(tok);
 		tok = strtok(NULL," ");
 		cr = atof(tok);
-		tok = strtok(linha," ");
+		tok = strtok(NULL," ");
 		tranc = atoi(tok);
-		tok = strtok(linha," ");
+		tok = strtok(NULL," ");
 		chc = atoi(tok);
-		tok = strtok(linha," ");
+		tok = strtok(NULL," ");
 		nper = atoi(tok);
-		tok = strtok(linha," ");
+		tok = strtok(NULL," ");
 		int cht = atoi(tok);
-		cur = selecionaCurriculo(cht,curs);
-		tok = strtok(linha," ");
-		a = insere(a,mat,cr,cur,tok,t);
+		cur = selecionaCurriculo(cht);
+		
+		//concatena os nomes separados por espaço
+		char nome[100];
+		strcpy(nome,"");
+		tok = strtok(NULL," ");
+		while(tok)
+		{
+			strcat(nome,tok);
+			strcat(nome," ");
+			tok = strtok(NULL," ");
+		}
+		//tira quebra de linha no final do nome
+		char *quebra = strchr(nome,'\n');
+		if(quebra) *quebra = 0;
+		
+		a = insere(a,mat,cr,cur,nome,t);
+		TInfo *aluno = buscaAluno(a,mat);
+		aluno->ntranc = tranc;
+		aluno->CHCS  = chc;
+		aluno->NPU = nper;
 	}
-	/*while(r)
-	{
-		a = insere(a,mat,cr,selecionaCurriculo(cur,curs),nome,t);
-		TAB *temp = busca(a,mat);
-		int i;
-		for(i = 0; i < temp->nchaves; i++) 
-			if(temp->info[i]->mat == mat)
-			{
-				temp->info[i]->CHCS = chc;
-				temp->info[i]->ntranc = tranc;
-				temp->info[i]->NPU = nper;
-			}
-		r = fscanf(fp,"%d %f %d %d %d %d %s %s",&mat,&cr,&tranc,&chc,&nper,&cur,nome,sobrenome);
-		printf("NOME: %d\n",r);
-		//imprime(a,0);
-	}*/
 	return a;
+}
+void alteraCHCS(TAB *a, int mat, int novo)
+{
+	TInfo *aluno = buscaAluno(a,mat);
+	if(!aluno)return;
+	aluno->CHCS =novo;
+}
+
+void alteraCR(TAB *a, int mat, float novo)
+{
+	TInfo *aluno = buscaAluno(a,mat);
+	if(!aluno)return;
+	aluno->cr =novo;
+}
+
+void alteraNPU(TAB *a, int mat, int novo)
+{
+	TInfo *aluno = buscaAluno(a,mat);
+	if(!aluno)return;
+	aluno->NPU =novo;
+}
+
+void alteraTRANC(TAB *a, int mat, int novo)
+{
+	TInfo *aluno = buscaAluno(a,mat);
+	if(!aluno)return;
+	aluno->ntranc =novo;
 }
 
 int main (void)
@@ -283,16 +334,16 @@ int main (void)
 	printf("insira o valor de T:\n");
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
-	preenche(raiz,"arq.txt",t,curriculos);
-	//raiz->folha = 1;
-	/*raiz = insere(raiz,3,3.5,1,t);
-	raiz = insere(raiz,5,3.5,1,t);
-	raiz = insere(raiz,9,3.5,1,t);
-	raiz = insere(raiz,20,3.5,1,t);
-	raiz = insere(raiz,4,3.5,1,t);
-	raiz = insere(raiz,1,3.5,1,t);
-	raiz = insere(raiz,0,3.5,1,t);
-	raiz = insere(raiz,21,3.5,1,t);*/
+	raiz = preenche(raiz,"arq.txt",t,curriculos);
+	int i;
+	scanf("%d",&i);
+	
+	//loop para operar o programa
+	while(i != 0)
+	{
+		imprimeAluno(raiz,i,curriculos);
+		scanf("%d",&j);
+	}
 	libera(raiz);
 	free(curriculos);
 	return 0;
