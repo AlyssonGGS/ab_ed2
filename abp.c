@@ -302,7 +302,7 @@ TAB *retira(TAB *a,int mat,int t)
 			if(y->folha) y->info[0] = z->info[z->nchaves-1];              //dar a y a chave i da arv
 			else y->info[0] = a->info[i-1];
 		  	y->nchaves++;
-		  	a->info[i-1] = y->info[0];//z->chave[z->nchaves-1];   //dar a arv uma chave de z
+		  	a->info[i-1] = y->info[0]; //deve estar bugando aqui
 		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
 		 	z->nchaves--;
 			z->folha = y->folha;
