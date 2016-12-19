@@ -153,8 +153,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 	TAB *c = cria_no(t);
 	c->nchaves = t + (a->folha - 1);
 	c->folha = a->folha;
-	if(a->folha)
-		c->info[0] = a->info[t-1];
+	if(a->folha)c->info[0] = a->info[t-1];
 	int j;
 	//copia as chaves
 	for(j=0;j<t-1;j++) c->info[j+a->folha] = a->info[j+t];
@@ -174,7 +173,8 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
   	for(j=b->nchaves; j>=i; j--) b->info[j] = b->info[j-1];
  	b->info[i-1] = a->info[t-1];
   	b->nchaves++;
-	a->prox = c;
+	b->prox = NULL;
+	if(a->folha)a->prox = c;
 	return b;
 }
 
