@@ -561,7 +561,7 @@ int main (void)
 			printf("\nCurriculo:");
 			scanf("%d",&cur);
 			printf("\nNome:");
-			scanf("%s",&nome);
+			scanf("%s",nome);
 			insere(raiz,mat,cr,cur,nome,t);	
 		}
 		else if(i==3){
@@ -597,8 +597,8 @@ int main (void)
 			scanf("%d",&mat);
 			
 			printf("Novo CR:");
-			scanf("%f",&aux);
-			alteraCR(raiz,mat,aux);
+			scanf("%f",&cr);
+			alteraCR(raiz,mat,cr);
 		
 		}
 		else if(i==10){
