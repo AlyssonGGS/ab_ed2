@@ -298,15 +298,12 @@ TAB *retira(TAB *pai,TAB *a,int mat,int t)
 	aux=i;
 	if(a->folha)
 	{
-		printf("é folha %d",t-1);
 		if(a->nchaves > t -1)//caso 1
 		{
-			printf("CASO 1");
+			printf("CASO 1\n");
 			int i,j;
 			for(i = 0; i < a->nchaves; i++)
 			{
-
-				printf("avalido o %d",a->info[i]->mat);
 				if(a->info[i]->mat == mat)
 				{
 					if(i==0){
@@ -354,7 +351,7 @@ TAB *retira(TAB *pai,TAB *a,int mat,int t)
 		//combina os dois se nao puder pegar
 		else{
 			int j;
-			struct TAB *aux;
+			TInfo *aux;
 			for(j=0;j<a->prox->nchaves;j++){
 				if(j==a->prox->nchaves-1) aux=a->prox->info[a->prox->nchaves-1];
 				a->info[a->nchaves+j]=a->prox->info[j];
