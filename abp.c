@@ -85,7 +85,7 @@ TInfo *cria_aluno(int mat, int cr, int cur,char *nome)
 	aluno->CHCS = 0;
 	aluno->NPU = 0;
 	aluno->cur = cur;
-	aluno->nome = malloc(sizeof(char) * 50);
+	aluno->nome = (char*)malloc(sizeof(char) * 50);
 	strcpy(aluno->nome,nome);
 	return aluno;
 }
