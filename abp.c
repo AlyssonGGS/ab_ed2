@@ -98,7 +98,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d:%d\n", a->info[i]->mat,a->folha);
+      		printf("%d\n",a->info[i]->mat);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -106,16 +106,17 @@ void imprime(TAB *a, int andar){
 
 TAB *busca(TAB *raiz, int x)
 {
-	//printf("buscando %d\n",x);
 	if(!raiz)return raiz;
-	//printf("FOLHA:%d E INFO:%d\n",raiz->folha,x);
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
-	printf("i:%d\n",i);
-	//printf("valor de mat:%d\n",raiz->info[i]->mat); 
-	//printf("%d",raiz->info[i]->mat);
 	if(raiz->folha && i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
+}
+
+TInfo *copiaInfo(TInfo *a)
+{
+	TInfo *resp = cria_aluno(a->mat,a->cr,a->cur,a->nome);
+	return resp;
 }
 
 TInfo *buscaAluno(TAB *a,int mat)
@@ -158,8 +159,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 	TAB *c = cria_no(t);
 	c->nchaves = t + (a->folha - 1);
 	c->folha = a->folha;
-	if(a->folha)
-		c->info[0] = a->info[t-1];
+	if(a->folha) c->info[0] = a->info[t-1];
 	int j;
 	//copia as chaves
 	for(j=0;j<t-1;j++) c->info[j+a->folha] = a->info[j+t];
@@ -177,7 +177,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
   	for(j=b->nchaves; j>=i; j--) b->filho[j+1]=b->filho[j];
   	b->filho[i] = c;
   	for(j=b->nchaves; j>=i; j--) b->info[j] = b->info[j-1];
- 	b->info[i-1] = a->info[t-1];
+ 	b->info[i-1] = copiaInfo(a->info[t-1]);
   	b->nchaves++;
 	a->prox = c;
 	return b;
@@ -203,6 +203,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
    	 	if(mat>a->info[i]->mat) i++;
   	}
   	a->filho[i] = insere_incompleto(a->filho[i], mat,cr,cur, nome, t);
+	imprime(a,0);
 	return a;
 }
 
@@ -215,7 +216,7 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		raiz->folha = 1;
 		raiz->info[0] = cria_aluno(mat,cr,cur,nome);
 		raiz->nchaves = 1;
-		printf("RAIZ:%d\n",raiz->nchaves);
+		imprime(raiz,0);
 		return raiz;
 	}
 	if((raiz->nchaves == 2 * t - 1))
@@ -226,11 +227,10 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		b->filho[0] = raiz;
 		b = divide(b,1,raiz,t);
 		b = insere_incompleto(b,mat,cr,cur, nome,t);	
-		printf("RAIZ:%d\n",raiz->nchaves);
 		return b;
 	}
 	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
-	printf("RAIZ:%d\n",raiz->nchaves);
+	imprime(raiz,0);
 	return raiz;
 }
 
@@ -241,28 +241,32 @@ TAB *retira(TAB *a,int mat,int t)
 	for(i = 0; i < a->nchaves && a->info[i]->mat <= mat; i++);
 	if(a->folha)
 	{
+		printf("vamo ver qual é a da árvore\n");
+		imprime(a,0);
 		if(a->nchaves > t -1)//caso 1
 		{
 			printf("CASO 1");
-			int i;
-			for(i = 0; i < a->nchaves; i++)
+			int k;
+			for(k = 0; k < a->nchaves; k++)
 			{
-				if(a->info[i]->mat == mat)
+				if(a->info[k]->mat == mat)
 				{
-					free(a->info[i]->nome);
-					free(a->info[i]);
-					a->info[i] = NULL;
+					free(a->info[k]->nome);
+					free(a->info[k]);
 					break;
 				}
 			}
+			if(k >= a->nchaves) return a;
 			int j;
-			for(j = i; j < a->nchaves;j++)
+			for(j = k; j < a->nchaves;j++)
 			{
 				a->info[j] = a->info[j+1];
 			}
-			printf("I:%d\n",i);
+			printf("I:%d\n",k);
 			a->nchaves--;
 		}
+		printf("vamo ver qual é a da árvore depois\n");
+		imprime(a,0);
 		return a;
 	}
 	TAB *y = a->filho[i], *z = NULL;
@@ -449,6 +453,7 @@ TAB *preenche(TAB *a,char *arq,int t,TCur *curs)
 	}
 	return a;
 }
+
 void alteraCHCS(TAB *a, int mat, int novo)
 {
 	TInfo *aluno = buscaAluno(a,mat);
@@ -476,6 +481,7 @@ void alteraTRANC(TAB *a, int mat, int novo)
 	if(!aluno)return;
 	aluno->ntranc =novo;
 }
+
 TAB* retira_raiz(TAB*a,int mat,int t){
 	if(!a) return a;
 	printf("folha:%d\n",a->folha);
@@ -511,6 +517,7 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 	printf("nao estou removendo da raiz\n");
 	return retira(a,mat,t);
 }
+
 int main (void)
 {
 	TCur *curriculos = cria_curriculos();
