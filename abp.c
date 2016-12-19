@@ -32,32 +32,6 @@ typedef struct info
 	struct info *prox;
 }TInfo;
 
-void limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c){
-	if(!a->folha) limpaTNCcom50cht(a->filho[0]);
-	else{
-		int i;
-		while(a->prox!=NULL){
-			for(i=0;i<a->nchaves;i++){
-				if(a->info[i]->CHCS>=c->tnc && a->info[i]->cht<c->cht/2) retira(raiz,raiz,a->info[i]->mat);
-			}
-			a=a->prox;
-		}
-	}
-}
-
-void limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c){
-	if(!a->folha) limpaTNCcom50cht(a->filho[0]);
-	else{
-		int i;
-		while(a->prox!=NULL){
-			for(i=0;i<a->nchaves;i++){
-				if(c->ntotper<=a->info[i]->NPU && c->CHT>a->info[i]->CHCS) retira(raiz,raiz,a->info[i]->mat);
-			}
-			a=a->prox;
-		}
-	}
-}
-
 TAB *inicializa()
 {
 	return NULL;
@@ -122,8 +96,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		if(a->prox) printf("%d(%d) \n", a->info[i]->mat,a->prox->info[0]->mat);
-   	 	else printf("%d\n", a->info[i]->mat);
+      		printf("%d\n", a->info[i]->mat);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -250,9 +223,43 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
 	return raiz;
 }
+void daMerge2(TAB *pai,TAB *a,int t){
+	if(a->nchaves<=t-1){
+		if(a->prox && a->prox->nchaves>=t-1){
+			a->info[a->nchaves]=a->prox->info[0];
+			a->filho[a->nchaves+1]=a->prox->filho[0];
+			a->nchaves++;
+			int j;
+			for(j=1;j<a->prox->nchaves;j++){
+				a->prox->info[j-1]=a->info[j];
+				a->prox->filho[j-1]=a->filho[j];
+			}
+			a->prox->filho[j-1]=a->filho[j];
+			a->prox->nchaves--;
+		}
+		else{	//tem que jogar no pai,nao juntar com o do lado
+			int j=0;
+			for(j=0;j<pai->nchaves;j++){
+				if(pai->filho[j]==a){
+					a->info[a->nchaves-1]=pai->info[j];
+					a->filho[a->nchaves]=a->prox->filho[0];
+					a->prox->filho[0]=NULL;		
+					break;
+				}
+			}
+			for(j=0;j<a->prox->nchaves;j++){
+				a->info[j+a->nchaves]=a->prox->info[j];
+				a->filho[j+a->nchaves+1]=a->prox->filho[j+1];
+				a->prox->filho[j+1]=NULL;
+				a->prox->info[j]=NULL;
+				
+			}
+		}
+	}
 
+}
 
-void daMerge(TAB*pai,TAB*a,int t){
+/*void daMerge(TAB*pai,TAB*a,int t){
 	if(a->prox!=NULL && a->prox->nchaves<=t-1 && (a->nchaves <= t -1) && pai!=NULL){
 		int j;
 		struct TInfo *aux;
@@ -282,7 +289,7 @@ void daMerge(TAB*pai,TAB*a,int t){
 			}
 		}
 	}
-}
+}*/
 
 TAB *retira(TAB *pai,TAB *a,int mat,int t)
 {
@@ -377,13 +384,40 @@ TAB *retira(TAB *pai,TAB *a,int mat,int t)
 		return a;
 	}
 	//tem que aplicar casos 3A e 3B para o filho onde o valor ṕode estar
-	//daMerge(pai,a,t);
+	//daMerge2(pai,a,t);
 	a->filho[i] = retira(a,a->filho[i],mat,t);
 	if(!a->folha && i>0) a->info[i-1]=a->filho[i]->info[0];
 	
 	
 	return a;
 }
+
+void limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
+	if(!a->folha) limpaTNCcom50cht(raiz,a->filho[0],c,t);
+	else{
+		int i;
+		while(a->prox!=NULL){
+			for(i=0;i<a->nchaves;i++){
+				if(a->info[i]->CHCS>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) retira(raiz,raiz,a->info[i]->mat,t);
+			}
+			a=a->prox;
+		}
+	}
+}
+
+void limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c,int t){
+	if(!a->folha) limpaTNCcom50cht(raiz,a->filho[0],c,t);
+	else{
+		int i;
+		while(a->prox!=NULL){
+			for(i=0;i<a->nchaves;i++){
+				if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS) retira(raiz,raiz,a->info[i]->mat,t);
+			}
+			a=a->prox;
+		}
+	}
+}
+
 
 TCur *cria_curriculos()
 {
@@ -495,16 +529,113 @@ int main (void)
 	printf("insira o valor de T:\n");
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
-	raiz = preenche(raiz,"arq.txt",t,curriculos);
 	int i;
+	int mat,cur,aux;
+	char *nome;
+	float cr;
+	printf("Aperte 1 para encher a arvore\n");
+	printf("Aperte 2 para inserir um valor\n");
+	printf("Aperte 3 para remover um valor\n");
+	printf("Aperte 4 para imprimir a arvore\n");
+	printf("Aperte 5 para buscar e imprimir um aluno\n");	
+	printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
+	printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
+	printf("Aperte 8 para alterar CHCS\n");
+	printf("Aperte 9 para alterar CR\n");
+	printf("Aperte 10 para alterar NPU\n");
+	printf("Aperte 11 para alterar TRANC\n");
+	printf("Aperte 12 para limpar a arvore\n");
 	scanf("%d",&i);
 	//loop para operar o programa
 	while(i != 0)
 	{
-	
-		imprimeAluno(raiz,i,curriculos);
-		retira(raiz,raiz,i,t);
-		imprime(raiz,0);
+		
+		if(i==1){
+			raiz = preenche(raiz,"arq.txt",t,curriculos);
+		}
+		else if(i==2){
+			printf("Mat:");
+			scanf("%d",&mat);
+			printf("\nCr:");
+			scanf("%f",&cr);
+			printf("\nCurriculo:");
+			scanf("%d",&cur);
+			printf("\nNome:");
+			scanf("%s",&nome);
+			insere(raiz,mat,cr,cur,nome,t);	
+		}
+		else if(i==3){
+			printf("Mat:");
+			scanf("%d",&mat);
+			retira(raiz,raiz,mat,t);
+		}
+		else if(i==4){
+			imprime(raiz,0);
+		}
+		else if(i==5){
+			printf("Mat:");
+			scanf("%d",&mat);
+			imprimeAluno(raiz,mat,curriculos);
+		}
+		else if(i==6){
+		 	limpaTNCcom50cht(raiz,raiz,curriculos,t);
+		}
+		else if(i==7){
+			limpaNTORPEReNao100CHT(raiz,raiz,curriculos,t);
+		}
+		else if(i==8){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			printf("Novo CHCS:");
+			scanf("%d",&aux);
+			alteraCHCS(raiz,mat,aux);
+		}
+		else if(i==9){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo CR:");
+			scanf("%f",&aux);
+			alteraCR(raiz,mat,aux);
+		
+		}
+		else if(i==10){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo NPU:");
+			scanf("%d",&aux);
+			alteraNPU(raiz,mat,aux);
+		
+		}
+		else if(i==11){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo Tranc:");
+			scanf("%d",&aux);
+			alteraTRANC(raiz,mat,aux);
+		
+		}
+		else if(i==12){
+			libera(raiz);
+		}
+		printf("Aperte 1 para encher a arvore\n");
+		printf("Aperte 2 para inserir um valor\n");
+		printf("Aperte 3 para remover um valor\n");
+		printf("Aperte 4 para imprimir a arvore\n");
+		printf("Aperte 5 para buscar e imprimir um aluno\n");	
+		printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
+		printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
+		printf("Aperte 8 para alterar CHCS\n");
+		printf("Aperte 9 para alterar CR\n");
+		printf("Aperte 10 para alterar NPU\n");
+		printf("Aperte 11 para alterar TRANC\n");
+		printf("Aperte 12 para limpar a arvore\n");
 		scanf("%d",&i);
 	}
 	libera(raiz);
