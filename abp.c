@@ -378,7 +378,7 @@ int main (void)
 	while(i != 0)
 	{
 		imprimeAluno(raiz,i,curriculos);
-		retira(raiz,i,t);
+		//retira(raiz,i,t);
 		imprime(raiz,0);
 		scanf("%d",&i);
 	}
