@@ -106,10 +106,12 @@ TAB *busca(TAB *raiz, int x)
 {
 	//printf("buscando %d\n",x);
 	if(!raiz)return raiz;
+	printf("FOLHA:%d E INFO:%d\n",raiz->folha,x);
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
+	printf("i:%d\n",i);
 	//printf("valor de mat:%d\n",raiz->info[i]->mat); 
-	if(i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
+	if(raiz->folha && i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
 }
 
@@ -144,6 +146,7 @@ void imprimeAluno(TAB *a, int mat, TCur *curs)
 	printf("CHCS:%d\n",aluno->CHCS);
 	printf("NPU:%d\n",aluno->NPU);
 	printf("Curriculo:%d\n",curs[aluno->cur].cht);
+	printf("Folha:%d\n",busca(a,mat)->folha);
 }
 
 TAB *divide(TAB *b,int i, TAB *a, int t)
@@ -186,6 +189,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
 	  		i--;
 		}
 		a->info[i+1] = cria_aluno(mat,cr,cur,nome);
+		a->folha = 1;
 		a->nchaves++;
 		return a;
 	}
@@ -207,7 +211,7 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		raiz = cria_no(t);
 		raiz->folha = 1;
 		raiz->info[0] = cria_aluno(mat,cr,cur,nome);
-		raiz->nchaves++;
+		raiz->nchaves = 1;
 		return raiz;
 	}
 	if((raiz->nchaves == 2 * t - 1))
@@ -226,18 +230,17 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 
 TAB *retira(TAB *a,int mat,int t)
 {
+	if(a==NULL) return a;
 	int i;
 	for(i = 0; i< a->nchaves && a->info[i]->mat < mat; i++);
 	if(a->folha)
 	{
-		printf("é folha %d",t-1);
 		if(a->nchaves > t -1)//caso 1
 		{
 			printf("CASO 1");
 			int i;
 			for(i = 0; i < a->nchaves; i++)
 			{
-				printf("avalido o %d",a->info[i]->mat);
 				if(a->info[i]->mat == mat)
 				{
 					free(a->info[i]->nome);
@@ -273,9 +276,11 @@ TAB *retira(TAB *a,int mat,int t)
 	  		if(!y->folha) y->filho[y->nchaves] = z->filho[0]; //enviar ponteiro menor de z para o novo elemento em y
 		  	for(j=0; j < z->nchaves; j++)       //ajustar filhos de z
 				z->filho[j] = z->filho[j+1];
+			a->folha = 0;
+			y->folha = z->folha;
 		  	z->nchaves--;
 		  	a->filho[i] = retira(a->filho[i], mat, t);
-		  return a;
+		  	return a;
 		}
 		  
 	  
@@ -294,37 +299,71 @@ TAB *retira(TAB *a,int mat,int t)
 		  	a->info[i-1] = y->info[0];//z->chave[z->nchaves-1];   //dar a arv uma chave de z
 		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
 		 	z->nchaves--;
+			a->folha = 0;
+			z->folha = y->folha;
 		  	a->filho[i] = retira(y, mat, t);
 		  	return a;
 		}
 		if(!z){ //CASO 3B
+			printf("Entrei no caso 3B");
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
-		    printf("\nCASO 3B: i menor que nchaves\n");
-		    z = a->filho[i+1];
-		    if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
-		    else y->info[t-1] = z->info[0]; 
-		    y->nchaves++;
-		    int j;
-		    for(j=z->folha; j < t-1; j++){
-		      y->info[t+j] = z->info[j];     //passar filho[i+1] para filho[i]
-		      y->nchaves++;
-		    }
-		    if(!y->folha){
-		      for(j=0; j<t; j++){
-		        y->filho[t+j] = z->filho[j];
-		      }
-		    }
-		    for(j=i; j < a->nchaves-1; j++){ //limpar referÃªncias de i
-		      a->info[j] = a->info[j+1];
-		      a->filho[j+1] = a->filho[j+2];
-		    }
-		    a->nchaves--;
-		    a = retira(a, mat, t);
-		    return a;
-      }
-    }
+				printf("\nCASO 3B: i menor que nchaves\n");
+				z = a->filho[i+1];
+				if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
+				else y->info[t-1] = z->info[0]; 
+				y->nchaves++;
+				int j;
+				for(j=z->folha; j < t-1; j++){
+				  y->info[t+(j-y->folha)] = z->info[j];     //passar filho[i+1] para filho[i]
+				  y->nchaves++;
+				}
+				if(!y->folha){
+				  for(j=0; j<t; j++){
+					y->filho[t+j] = z->filho[j];
+				  }
+				}
+				for(j=i; j < a->nchaves-1; j++){ //limpar referÃªncias de i
+				  a->info[j] = a->info[j+1];
+				  a->filho[j+1] = a->filho[j+2];
+				}
+				a->nchaves--;
+				a->folha = 0;
+				y->folha = z->folha;
+				a = retira(a, mat, t);
+				return a;
+      		}
+    	}
+		if((i > 0) && (a->filho[i-1]->nchaves == t-1)){ 
+			printf("\nCASO 3B: i igual a nchaves\n");
+			z = a->filho[i-1];
+			if(i == a->nchaves)
+			{
+				if(!z->folha)z->info[t-1] = a->info[i-1]; //pegar chave[i] e poe ao final de filho[i-1]
+				else z->info[t-1] = y->info[0];
+			}
+			else{
+				if(!z->folha) z->info[t-1] = a->info[i];   //pegar chave [i] e poe ao final de filho[i-1]
+				else z->info[t-1] = y->info[0];
+			}
+			z->nchaves++;
+			int j;
+			for(j=z->folha; j < t-1; j++){
+			  z->info[t+(j-z->folha)] = y->info[j];     //passar filho[i+1] para filho[i]
+			  z->nchaves++;
+			}
+			if(!z->folha){
+			  for(j=0; j<t; j++){
+				z->filho[t+j] = y->filho[j];
+			  }
+			}
+			z->folha = y->folha;
+			a->nchaves--;
+			a->filho[i-1] = z;
+			a = retira(a, mat, t);
+			return a;
+      	}
+	}
 	a->filho[i] = retira(a->filho[i],mat,t);
-	//if(!a->folha && i>0) a->info[i-1]=a->filho[i]->info[0];
 	return a;
 }
 
@@ -429,7 +468,32 @@ void alteraTRANC(TAB *a, int mat, int novo)
 	if(!aluno)return;
 	aluno->ntranc =novo;
 }
-
+TAB* retira_raiz(TAB*a,int mat,int t){
+	if(a && a->nchaves>1){
+		int i;
+		for(i = 0; i < a->nchaves; i++)
+		{
+			if(a->info[i]->mat == mat)
+			{
+				free(a->info[i]->nome);
+				free(a->info[i]);
+				a->info[i] = NULL;
+				break;
+			}
+		}
+		int j;
+		for(j = i; j < a->nchaves;j++)
+		{
+			a->info[j] = a->info[j+1];
+		}
+		a->nchaves--;
+		return a;
+	}
+	else{
+		libera(a);
+		return NULL;
+	}
+}
 int main (void)
 {
 	TCur *curriculos = cria_curriculos();
@@ -439,14 +503,22 @@ int main (void)
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
 	raiz = preenche(raiz,"arq.txt",t,curriculos);
-	imprime(raiz,0);
 	int i;
 	scanf("%d",&i);
 	//loop para operar o programa
 	while(i != 0)
 	{
 		imprimeAluno(raiz,i,curriculos);
-		retira(raiz,i,t);
+		printf("raiz->nchaves:%d\n",raiz->nchaves);
+		if(raiz->folha==1){
+			raiz=retira_raiz(raiz,i,t);
+			//printf("é raiz");
+		}
+		else{
+			raiz=retira(raiz,i,t);
+			if(raiz->filho[0]==NULL) raiz->folha=1;
+			printf("Filho%d\n",raiz->filho[0]->info[0]->mat);
+		}
 		imprime(raiz,0);
 		scanf("%d",&i);
 	}
