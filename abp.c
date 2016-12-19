@@ -237,7 +237,6 @@ TAB *retira(TAB *a,int mat,int t)
 			int i;
 			for(i = 0; i < a->nchaves; i++)
 			{
-
 				printf("avalido o %d",a->info[i]->mat);
 				if(a->info[i]->mat == mat)
 				{
@@ -256,8 +255,76 @@ TAB *retira(TAB *a,int mat,int t)
 		}
 		return a;
 	}
-	//tem que aplicar casos 3A e 3B para o filho onde o valor ṕode estar
+	TAB *y = a->filho[i], *z = NULL;
+ 	if (y->nchaves == t-1)
+ 	{ 	//CASOS 3A e 3B
+		if((i < a->nchaves) && (a->filho[i+1]->nchaves >=t))
+		{ //CASO 3A
+		  printf("\nCASO 3A: i menor que nchaves\n");
+			z = a->filho[i+1];
+			if (y->folha) y->info[t-1] = z->info[0];		  
+			else y->info[t-1] = a->info[i];
+			y->nchaves++;
+			printf("Primeira chave de z:%d\n",z->info[0]->mat);
+			int j;
+		  	for(j=0; j < z->nchaves-1; j++)  //ajustar chaves de z
+				z->info[j] = z->info[j+1];
+			a->info[i] = z->info[0];     //dar a a uma chave de z
+	  		if(!y->folha) y->filho[y->nchaves] = z->filho[0]; //enviar ponteiro menor de z para o novo elemento em y
+		  	for(j=0; j < z->nchaves; j++)       //ajustar filhos de z
+				z->filho[j] = z->filho[j+1];
+		  	z->nchaves--;
+		  	a->filho[i] = retira(a->filho[i], mat, t);
+		  return a;
+		}
+		  
+	  
+		if((i > 0) && (!z) && (a->filho[i-1]->nchaves >=t))
+		{ //CASO 3A
+		  	printf("\nCASO 3A: i igual a nchaves\n");
+		  	z = a->filho[i-1];
+		 	int j;
+		  	for(j = y->nchaves; j>0; j--)               //encaixar lugar da nova chave
+				y->info[j] = y->info[j-1];
+		  	for(j = y->nchaves+1; j>0; j--)             //encaixar lugar dos filhos da nova chave
+				y->filho[j] = y->filho[j-1];
+			if(y->folha) y->info[0] = z->info[z->nchaves-1];              //dar a y a chave i da arv
+			else y->info[0] = a->info[i-1];
+		  	y->nchaves++;
+		  	a->info[i-1] = y->info[0];//z->chave[z->nchaves-1];   //dar a arv uma chave de z
+		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
+		 	z->nchaves--;
+		  	a->filho[i] = retira(y, mat, t);
+		  	return a;
+		}
+		if(!z){ //CASO 3B
+      		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
+		    printf("\nCASO 3B: i menor que nchaves\n");
+		    z = a->filho[i+1];
+		    if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
+		    else y->info[t-1] = z->info[0]; 
+		    y->nchaves++;
+		    int j;
+		    for(j=z->folha; j < t-1; j++){
+		      y->info[t+j] = z->info[j];     //passar filho[i+1] para filho[i]
+		      y->nchaves++;
+		    }
+		    if(!y->folha){
+		      for(j=0; j<t; j++){
+		        y->filho[t+j] = z->filho[j];
+		      }
+		    }
+		    for(j=i; j < a->nchaves-1; j++){ //limpar referÃªncias de i
+		      a->info[j] = a->info[j+1];
+		      a->filho[j+1] = a->filho[j+2];
+		    }
+		    a->nchaves--;
+		    a = retira(a, mat, t);
+		    return a;
+      }
+    }
 	a->filho[i] = retira(a->filho[i],mat,t);
+	//if(!a->folha && i>0) a->info[i-1]=a->filho[i]->info[0];
 	return a;
 }
 
@@ -372,13 +439,14 @@ int main (void)
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
 	raiz = preenche(raiz,"arq.txt",t,curriculos);
+	imprime(raiz,0);
 	int i;
 	scanf("%d",&i);
 	//loop para operar o programa
 	while(i != 0)
 	{
 		imprimeAluno(raiz,i,curriculos);
-		//retira(raiz,i,t);
+		retira(raiz,i,t);
 		imprime(raiz,0);
 		scanf("%d",&i);
 	}
