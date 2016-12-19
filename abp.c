@@ -44,8 +44,10 @@ void libera(TAB *a)
 		int i;
 		if(!a->folha)
 		for(i = 0; i < a->nchaves + 1;i++)
+		{
 			libera(a->filho[i]);
-		 
+			//free(a->filho[i]);
+		}
 		for(i = 0; i < a->nchaves;i++)
 		{
 			free(a->info[i]->nome);
@@ -96,7 +98,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d\n", a->info[i]->mat);
+      		printf("%d:%d\n", a->info[i]->mat,a->folha);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -106,11 +108,12 @@ TAB *busca(TAB *raiz, int x)
 {
 	//printf("buscando %d\n",x);
 	if(!raiz)return raiz;
-	printf("FOLHA:%d E INFO:%d\n",raiz->folha,x);
+	//printf("FOLHA:%d E INFO:%d\n",raiz->folha,x);
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
 	printf("i:%d\n",i);
 	//printf("valor de mat:%d\n",raiz->info[i]->mat); 
+	//printf("%d",raiz->info[i]->mat);
 	if(raiz->folha && i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
 }
@@ -212,6 +215,7 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		raiz->folha = 1;
 		raiz->info[0] = cria_aluno(mat,cr,cur,nome);
 		raiz->nchaves = 1;
+		printf("RAIZ:%d\n",raiz->nchaves);
 		return raiz;
 	}
 	if((raiz->nchaves == 2 * t - 1))
@@ -222,9 +226,11 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		b->filho[0] = raiz;
 		b = divide(b,1,raiz,t);
 		b = insere_incompleto(b,mat,cr,cur, nome,t);	
+		printf("RAIZ:%d\n",raiz->nchaves);
 		return b;
 	}
 	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
+	printf("RAIZ:%d\n",raiz->nchaves);
 	return raiz;
 }
 
@@ -232,7 +238,7 @@ TAB *retira(TAB *a,int mat,int t)
 {
 	if(a==NULL) return a;
 	int i;
-	for(i = 0; i< a->nchaves && a->info[i]->mat < mat; i++);
+	for(i = 0; i < a->nchaves && a->info[i]->mat <= mat; i++);
 	if(a->folha)
 	{
 		if(a->nchaves > t -1)//caso 1
@@ -254,6 +260,7 @@ TAB *retira(TAB *a,int mat,int t)
 			{
 				a->info[j] = a->info[j+1];
 			}
+			printf("I:%d\n",i);
 			a->nchaves--;
 		}
 		return a;
@@ -276,7 +283,6 @@ TAB *retira(TAB *a,int mat,int t)
 	  		if(!y->folha) y->filho[y->nchaves] = z->filho[0]; //enviar ponteiro menor de z para o novo elemento em y
 		  	for(j=0; j < z->nchaves; j++)       //ajustar filhos de z
 				z->filho[j] = z->filho[j+1];
-			a->folha = 0;
 			y->folha = z->folha;
 		  	z->nchaves--;
 		  	a->filho[i] = retira(a->filho[i], mat, t);
@@ -299,7 +305,6 @@ TAB *retira(TAB *a,int mat,int t)
 		  	a->info[i-1] = y->info[0];//z->chave[z->nchaves-1];   //dar a arv uma chave de z
 		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
 		 	z->nchaves--;
-			a->folha = 0;
 			z->folha = y->folha;
 		  	a->filho[i] = retira(y, mat, t);
 		  	return a;
@@ -327,8 +332,9 @@ TAB *retira(TAB *a,int mat,int t)
 				  a->filho[j+1] = a->filho[j+2];
 				}
 				a->nchaves--;
-				a->folha = 0;
 				y->folha = z->folha;
+				printf("FOLHA:%d\n",a->nchaves);
+				if(a->nchaves == 0) a = a->filho[0];
 				a = retira(a, mat, t);
 				return a;
       		}
@@ -359,10 +365,12 @@ TAB *retira(TAB *a,int mat,int t)
 			z->folha = y->folha;
 			a->nchaves--;
 			a->filho[i-1] = z;
+			if(a->nchaves == 0) a = a->filho[0];
 			a = retira(a, mat, t);
 			return a;
       	}
 	}
+	printf("chamando retira pro filho: %d\n",i);
 	a->filho[i] = retira(a->filho[i],mat,t);
 	return a;
 }
@@ -469,10 +477,16 @@ void alteraTRANC(TAB *a, int mat, int novo)
 	aluno->ntranc =novo;
 }
 TAB* retira_raiz(TAB*a,int mat,int t){
-	if(a && a->nchaves>1){
+	if(!a) return a;
+	printf("folha:%d\n",a->folha);
+	if(a->folha)
+	{
+		printf("nchaves: %d\n",a->nchaves);
 		int i;
+		printf("antes do for:%d\n",a->nchaves);
 		for(i = 0; i < a->nchaves; i++)
 		{
+			printf("Achei o cara %d com mat: %d\n",i,a->info[i]->mat);
 			if(a->info[i]->mat == mat)
 			{
 				free(a->info[i]->nome);
@@ -487,12 +501,15 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 			a->info[j] = a->info[j+1];
 		}
 		a->nchaves--;
+		if(a->nchaves == 0)
+		{
+			libera(a);
+			a = NULL;
+		}
 		return a;
 	}
-	else{
-		libera(a);
-		return NULL;
-	}
+	printf("nao estou removendo da raiz\n");
+	return retira(a,mat,t);
 }
 int main (void)
 {
@@ -508,17 +525,19 @@ int main (void)
 	//loop para operar o programa
 	while(i != 0)
 	{
-		imprimeAluno(raiz,i,curriculos);
-		printf("raiz->nchaves:%d\n",raiz->nchaves);
-		if(raiz->folha==1){
+		imprime(raiz,0);
+		raiz = retira_raiz(raiz,i,t);
+		/*//imprimeAluno(raiz,i,curriculos);
+		//printf("raiz->nchaves:%d\n",raiz->nchaves);
+		if(raiz && raiz->folha==1){
 			raiz=retira_raiz(raiz,i,t);
 			//printf("é raiz");
 		}
 		else{
-			raiz=retira(raiz,i,t);
-			if(raiz->filho[0]==NULL) raiz->folha=1;
-			printf("Filho%d\n",raiz->filho[0]->info[0]->mat);
-		}
+			raiz = retira(raiz,i,t);
+			if(raiz && raiz->filho[0]==NULL) raiz->folha=1;
+			//printf("Filho%d\n",raiz->filho[0]->info[0]->mat);
+		}*/
 		imprime(raiz,0);
 		scanf("%d",&i);
 	}
