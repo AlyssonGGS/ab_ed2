@@ -6,7 +6,6 @@ typedef struct no
 {
 	int nchaves;
 	int folha;
-	struct no *pai;
 	struct no **filho;
 	struct info **info;
 	struct no *prox;
@@ -60,7 +59,6 @@ void libera(TAB *a)
 TAB *cria_no(int t)
 {
 	TAB *no = (TAB*)malloc(sizeof(TAB));
-	no->pai = NULL;
 	no->folha = 0;
 	no->filho = (TAB**)malloc(sizeof(TAB) * (2 * t));
 	no->info= (TInfo**)malloc(sizeof(TInfo) * (2 * t - 1));
@@ -98,7 +96,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d\n",a->info[i]->mat);
+      		printf("%d:%d\n",a->nchaves,a->info[i]->mat);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -241,8 +239,6 @@ TAB *retira(TAB *a,int mat,int t)
 	for(i = 0; i < a->nchaves && a->info[i]->mat <= mat; i++);
 	if(a->folha)
 	{
-		printf("vamo ver qual é a da árvore\n");
-		imprime(a,0);
 		if(a->nchaves > t -1)//caso 1
 		{
 			printf("CASO 1");
@@ -265,10 +261,9 @@ TAB *retira(TAB *a,int mat,int t)
 			printf("I:%d\n",k);
 			a->nchaves--;
 		}
-		printf("vamo ver qual é a da árvore depois\n");
-		imprime(a,0);
 		return a;
 	}
+	
 	TAB *y = a->filho[i], *z = NULL;
  	if (y->nchaves == t-1)
  	{ 	//CASOS 3A e 3B
@@ -279,6 +274,7 @@ TAB *retira(TAB *a,int mat,int t)
 			if (y->folha) y->info[t-1] = z->info[0];		  
 			else y->info[t-1] = a->info[i];
 			y->nchaves++;
+			imprime(y,0);
 			printf("Primeira chave de z:%d\n",z->info[0]->mat);
 			int j;
 		  	for(j=0; j < z->nchaves-1; j++)  //ajustar chaves de z
@@ -316,7 +312,6 @@ TAB *retira(TAB *a,int mat,int t)
 		if(!z){ //CASO 3B
 			printf("Entrei no caso 3B");
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
-				printf("\nCASO 3B: i menor que nchaves\n");
 				z = a->filho[i+1];
 				if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
 				else y->info[t-1] = z->info[0]; 
@@ -337,42 +332,40 @@ TAB *retira(TAB *a,int mat,int t)
 				}
 				a->nchaves--;
 				y->folha = z->folha;
-				printf("FOLHA:%d\n",a->nchaves);
 				if(a->nchaves == 0) a = a->filho[0];
 				a = retira(a, mat, t);
 				return a;
       		}
-    	}
-		if((i > 0) && (a->filho[i-1]->nchaves == t-1)){ 
-			printf("\nCASO 3B: i igual a nchaves\n");
-			z = a->filho[i-1];
-			if(i == a->nchaves)
-			{
-				if(!z->folha)z->info[t-1] = a->info[i-1]; //pegar chave[i] e poe ao final de filho[i-1]
-				else z->info[t-1] = y->info[0];
+			if((i > 0) && (a->filho[i-1]->nchaves == t-1)){ 
+				z = a->filho[i-1];
+				if(i == a->nchaves)
+				{
+					if(!z->folha)z->info[t-1] = a->info[i-1]; //pegar chave[i] e poe ao final de filho[i-1]
+					else z->info[t-1] = y->info[0];
+				}
+				else{
+					if(!z->folha) z->info[t-1] = a->info[i];   //pegar chave [i] e poe ao final de filho[i-1]
+					else z->info[t-1] = y->info[0];
+				}
+				z->nchaves++;
+				int j;
+				for(j=z->folha; j < t-1; j++){
+				  z->info[t+(j-z->folha)] = y->info[j];     //passar filho[i+1] para filho[i]
+				  z->nchaves++;
+				}
+				if(!z->folha){
+				  for(j=0; j<t; j++){
+					z->filho[t+j] = y->filho[j];
+				  }
+				}
+				z->folha = y->folha;
+				a->nchaves--;
+				a->filho[i-1] = z;
+				if(a->nchaves == 0) a = a->filho[0];
+				a = retira(a, mat, t);
+				return a;
 			}
-			else{
-				if(!z->folha) z->info[t-1] = a->info[i];   //pegar chave [i] e poe ao final de filho[i-1]
-				else z->info[t-1] = y->info[0];
-			}
-			z->nchaves++;
-			int j;
-			for(j=z->folha; j < t-1; j++){
-			  z->info[t+(j-z->folha)] = y->info[j];     //passar filho[i+1] para filho[i]
-			  z->nchaves++;
-			}
-			if(!z->folha){
-			  for(j=0; j<t; j++){
-				z->filho[t+j] = y->filho[j];
-			  }
-			}
-			z->folha = y->folha;
-			a->nchaves--;
-			a->filho[i-1] = z;
-			if(a->nchaves == 0) a = a->filho[0];
-			a = retira(a, mat, t);
-			return a;
-      	}
+		}
 	}
 	printf("chamando retira pro filho: %d\n",i);
 	a->filho[i] = retira(a->filho[i],mat,t);
