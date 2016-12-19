@@ -96,7 +96,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d:%d\n",a->nchaves,a->info[i]->mat);
+      		printf("%d\n",a->nchaves);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -107,7 +107,7 @@ TAB *busca(TAB *raiz, int x)
 	if(!raiz)return raiz;
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
-	if(raiz->folha && i < raiz->nchaves && x == raiz->info[i]->mat) return raiz;
+	if(raiz->folha && raiz->info[i] &&i <=raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
 }
 
@@ -126,9 +126,9 @@ TInfo *buscaAluno(TAB *a,int mat)
 		return NULL;
 	}
 	int i;
-	for(i = 0; i < arv->nchaves;i++)
+	for(i = 0; i <= arv->nchaves;i++)
 	{
-		if(arv->info[i]->mat == mat) return arv->info[i];
+		if(arv->info && arv->info[i]->mat == mat) return arv->info[i];
 	}
 	return NULL;
 }
@@ -241,7 +241,7 @@ TAB *retira(TAB *a,int mat,int t)
 	{
 		if(a->nchaves > t -1)//caso 1
 		{
-			printf("CASO 1");
+			//printf("CASO 1");
 			int k;
 			for(k = 0; k < a->nchaves; k++)
 			{
@@ -258,7 +258,7 @@ TAB *retira(TAB *a,int mat,int t)
 			{
 				a->info[j] = a->info[j+1];
 			}
-			printf("I:%d\n",k);
+			//printf("I:%d\n",k);
 			a->nchaves--;
 		}
 		return a;
@@ -269,13 +269,13 @@ TAB *retira(TAB *a,int mat,int t)
  	{ 	//CASOS 3A e 3B
 		if((i < a->nchaves) && (a->filho[i+1]->nchaves >=t))
 		{ //CASO 3A
-		  printf("\nCASO 3A: i menor que nchaves\n");
+		  //printf("\nCASO 3A: i menor que nchaves\n");
 			z = a->filho[i+1];
 			if (y->folha) y->info[t-1] = z->info[0];		  
 			else y->info[t-1] = a->info[i];
 			y->nchaves++;
 			imprime(y,0);
-			printf("Primeira chave de z:%d\n",z->info[0]->mat);
+			//printf("Primeira chave de z:%d\n",z->info[0]->mat);
 			int j;
 		  	for(j=0; j < z->nchaves-1; j++)  //ajustar chaves de z
 				z->info[j] = z->info[j+1];
@@ -292,7 +292,7 @@ TAB *retira(TAB *a,int mat,int t)
 	  
 		if((i > 0) && (!z) && (a->filho[i-1]->nchaves >=t))
 		{ //CASO 3A
-		  	printf("\nCASO 3A: i igual a nchaves\n");
+		  	//printf("\nCASO 3A: i igual a nchaves\n");
 		  	z = a->filho[i-1];
 		 	int j;
 		  	for(j = y->nchaves; j>0; j--)               //encaixar lugar da nova chave
@@ -309,8 +309,8 @@ TAB *retira(TAB *a,int mat,int t)
 		  	a->filho[i] = retira(y, mat, t);
 		  	return a;
 		}
-		if(!z){ //CASO 3B
-			printf("Entrei no caso 3B");
+		if(!z){ //CASO 3B	
+			//printf("Entrei no caso 3B");
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
 				z = a->filho[i+1];
 				if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
@@ -367,7 +367,7 @@ TAB *retira(TAB *a,int mat,int t)
 			}
 		}
 	}
-	printf("chamando retira pro filho: %d\n",i);
+	//printf("chamando retira pro filho: %d\n",i);
 	a->filho[i] = retira(a->filho[i],mat,t);
 	return a;
 }
@@ -477,15 +477,15 @@ void alteraTRANC(TAB *a, int mat, int novo)
 
 TAB* retira_raiz(TAB*a,int mat,int t){
 	if(!a) return a;
-	printf("folha:%d\n",a->folha);
+	//printf("folha:%d\n",a->folha);
 	if(a->folha)
 	{
-		printf("nchaves: %d\n",a->nchaves);
+		//printf("nchaves: %d\n",a->nchaves);
 		int i;
-		printf("antes do for:%d\n",a->nchaves);
+		//printf("antes do for:%d\n",a->nchaves);
 		for(i = 0; i < a->nchaves; i++)
 		{
-			printf("Achei o cara %d com mat: %d\n",i,a->info[i]->mat);
+			//printf("Achei o cara %d com mat: %d\n",i,a->info[i]->mat);
 			if(a->info[i]->mat == mat)
 			{
 				free(a->info[i]->nome);
@@ -507,8 +507,34 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 		}
 		return a;
 	}
-	printf("nao estou removendo da raiz\n");
+	//printf("nao estou removendo da raiz\n");
 	return retira(a,mat,t);
+}
+TAB* limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
+	while(!a->folha) a=a->filho[0];
+	int i;
+	while(a->prox!=NULL){
+		for(i=0;i<a->nchaves;i++){
+			if(a->info[i]->CHCS>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) raiz=retira(raiz,a->info[i]->mat,t);
+		}
+		a=a->prox;
+	}
+
+	return raiz;
+}
+
+TAB* limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c,int t){
+	while(!a->folha) a=a->filho[0];
+	
+	int i;
+	while(a->prox!=NULL){
+		for(i=0;i<a->nchaves;i++){
+			if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS) raiz=retira(raiz,a->info[i]->mat,t);
+		}
+		a=a->prox;
+	}
+	
+	return raiz;
 }
 
 int main (void)
@@ -519,26 +545,108 @@ int main (void)
 	printf("insira o valor de T:\n");
 	scanf("%d",&t);
 	TAB *raiz = inicializa();
-	raiz = preenche(raiz,"arq.txt",t,curriculos);
 	int i;
+	int mat,cur,aux;
+	char *nome;
+	float cr,auxF;
+	printf("Aperte 1 para encher a arvore\n");
+	printf("Aperte 2 para inserir um valor\n");
+	printf("Aperte 3 para remover um valor\n");
+	printf("Aperte 4 para imprimir a arvore\n");
+	printf("Aperte 5 para buscar e imprimir um aluno\n");	
+	printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
+	printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
+	printf("Aperte 8 para alterar CHCS\n");
+	printf("Aperte 9 para alterar CR\n");
+	printf("Aperte 10 para alterar NPU\n");
+	printf("Aperte 11 para alterar TRANC\n");
 	scanf("%d",&i);
 	//loop para operar o programa
 	while(i != 0)
 	{
-		imprime(raiz,0);
-		raiz = retira_raiz(raiz,i,t);
-		/*//imprimeAluno(raiz,i,curriculos);
-		//printf("raiz->nchaves:%d\n",raiz->nchaves);
-		if(raiz && raiz->folha==1){
-			raiz=retira_raiz(raiz,i,t);
-			//printf("é raiz");
+		
+		if(i==1){
+			raiz = preenche(raiz,"arq.txt",t,curriculos);
 		}
-		else{
-			raiz = retira(raiz,i,t);
-			if(raiz && raiz->filho[0]==NULL) raiz->folha=1;
-			//printf("Filho%d\n",raiz->filho[0]->info[0]->mat);
-		}*/
-		imprime(raiz,0);
+		else if(i==2){
+			printf("Mat:");
+			scanf("%d",&mat);
+			printf("\nCr:");
+			scanf("%f",&cr);
+			printf("\nCurriculo:");
+			scanf("%d",&cur);
+			printf("\nNome:");
+			scanf("%s",nome);
+			raiz=insere(raiz,mat,cr,cur,nome,t);	
+		}
+		else if(i==3){
+			printf("Mat:");
+			scanf("%d",&mat);
+			raiz=retira(raiz,mat,t);
+		}
+		else if(i==4){
+			imprime(raiz,0);
+		}
+		else if(i==5){
+			printf("Mat:");
+			scanf("%d",&mat);
+			imprimeAluno(raiz,mat,curriculos);
+		}
+		else if(i==6){
+		 	raiz=limpaTNCcom50cht(raiz,raiz,curriculos,t);
+		}
+		else if(i==7){
+			raiz=limpaNTORPEReNao100CHT(raiz,raiz,curriculos,t);
+		}
+		else if(i==8){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			printf("Novo CHCS:");
+			scanf("%d",&aux);
+			alteraCHCS(raiz,mat,aux);
+		}
+		else if(i==9){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo CR:");
+			scanf("%f",&auxF);
+			alteraCR(raiz,mat,auxF);
+		
+		}
+		else if(i==10){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo NPU:");
+			scanf("%d",&aux);
+			alteraNPU(raiz,mat,aux);
+		
+		}
+		else if(i==11){
+			
+			printf("Mat:");
+			scanf("%d",&mat);
+			
+			printf("Novo Tranc:");
+			scanf("%d",&aux);
+			alteraTRANC(raiz,mat,aux);
+		
+		}
+		printf("Aperte 1 para encher a arvore\n");
+		printf("Aperte 2 para inserir um valor\n");
+		printf("Aperte 3 para remover um valor\n");
+		printf("Aperte 4 para imprimir a arvore\n");
+		printf("Aperte 5 para buscar e imprimir um aluno\n");	
+		printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
+		printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
+		printf("Aperte 8 para alterar CHCS\n");
+		printf("Aperte 9 para alterar CR\n");
+		printf("Aperte 10 para alterar NPU\n");
+		printf("Aperte 11 para alterar TRANC\n");
 		scanf("%d",&i);
 	}
 	libera(raiz);
