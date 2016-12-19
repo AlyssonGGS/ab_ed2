@@ -32,6 +32,32 @@ typedef struct info
 	struct info *prox;
 }TInfo;
 
+void limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c){
+	if(!a->folha) limpaTNCcom50cht(a->filho[0]);
+	else{
+		int i;
+		while(a->prox!=NULL){
+			for(i=0;i<a->nchaves;i++){
+				if(a->info[i]->CHCS>=c->tnc && a->info[i]->cht<c->cht/2) retira(raiz,raiz,a->info[i]->mat);
+			}
+			a=a->prox;
+		}
+	}
+}
+
+void limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c){
+	if(!a->folha) limpaTNCcom50cht(a->filho[0]);
+	else{
+		int i;
+		while(a->prox!=NULL){
+			for(i=0;i<a->nchaves;i++){
+				if(c->ntotper<=a->info[i]->NPU && c->CHT>a->info[i]->CHCS) retira(raiz,raiz,a->info[i]->mat);
+			}
+			a=a->prox;
+		}
+	}
+}
+
 TAB *inicializa()
 {
 	return NULL;
@@ -229,14 +255,15 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 void daMerge(TAB*pai,TAB*a,int t){
 	if(a->prox!=NULL && a->prox->nchaves<=t-1 && (a->nchaves <= t -1) && pai!=NULL){
 		int j;
-		struct TAB *aux;
+		struct TInfo *aux;
 		for(j=0;j<a->prox->nchaves;j++){
 			if(j==a->prox->nchaves-1) aux=a->prox->info[a->prox->nchaves-1];
 			a->info[a->nchaves+j]=a->prox->info[j];
-			a->filho[a->nchaves+j]=a->prox->filho[j];
+			a->filho[a->nchaves+1+j]=a->prox->filho[j];
 			a->prox->info[j]=NULL;
 			a->nchaves++;
 		}
+		a->filho[a->nchaves+1+j]=a->prox->filho[j];
 		a->info[a->nchaves-1]=aux;
 		a->prox=a->prox->prox;
 		for(j=0;j<pai->nchaves+1;j++){
@@ -350,7 +377,7 @@ TAB *retira(TAB *pai,TAB *a,int mat,int t)
 		return a;
 	}
 	//tem que aplicar casos 3A e 3B para o filho onde o valor ṕode estar
-	daMerge(pai,a,t);
+	//daMerge(pai,a,t);
 	a->filho[i] = retira(a,a->filho[i],mat,t);
 	if(!a->folha && i>0) a->info[i-1]=a->filho[i]->info[0];
 	
