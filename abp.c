@@ -96,7 +96,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d\n",a->nchaves);
+      		printf("%d\n",a->info[i]->mat);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -148,7 +148,6 @@ void imprimeAluno(TAB *a, int mat, TCur *curs)
 	printf("CHCS:%d\n",aluno->CHCS);
 	printf("NPU:%d\n",aluno->NPU);
 	printf("Curriculo:%d\n",curs[aluno->cur].cht);
-	printf("Folha:%d\n",busca(a,mat)->folha);
 }
 
 TAB *divide(TAB *b,int i, TAB *a, int t)
@@ -201,7 +200,6 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
    	 	if(mat>a->info[i]->mat) i++;
   	}
   	a->filho[i] = insere_incompleto(a->filho[i], mat,cr,cur, nome, t);
-	imprime(a,0);
 	return a;
 }
 
@@ -214,7 +212,6 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		raiz->folha = 1;
 		raiz->info[0] = cria_aluno(mat,cr,cur,nome);
 		raiz->nchaves = 1;
-		imprime(raiz,0);
 		return raiz;
 	}
 	if((raiz->nchaves == 2 * t - 1))
@@ -228,7 +225,6 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		return b;
 	}
 	raiz = insere_incompleto(raiz,mat,cr,cur, nome,t);
-	imprime(raiz,0);
 	return raiz;
 }
 
@@ -269,17 +265,17 @@ TAB *retira(TAB *a,int mat,int t)
  	{ 	//CASOS 3A e 3B
 		if((i < a->nchaves) && (a->filho[i+1]->nchaves >=t))
 		{ //CASO 3A
-		  //printf("\nCASO 3A: i menor que nchaves\n");
+		  	printf("\nCASO 3A: i menor que nchaves\n");
 			z = a->filho[i+1];
-			if (y->folha) y->info[t-1] = z->info[0];		  
-			else y->info[t-1] = a->info[i];
+			if (y->folha) y->info[t-1] = copiaInfo(z->info[0]);		  
+			else y->info[t-1] = copiaInfo(a->info[i]);
 			y->nchaves++;
 			imprime(y,0);
 			//printf("Primeira chave de z:%d\n",z->info[0]->mat);
 			int j;
 		  	for(j=0; j < z->nchaves-1; j++)  //ajustar chaves de z
 				z->info[j] = z->info[j+1];
-			a->info[i] = z->info[0];     //dar a a uma chave de z
+			a->info[i] = copiaInfo(z->info[0]);     //dar a a uma chave de z
 	  		if(!y->folha) y->filho[y->nchaves] = z->filho[0]; //enviar ponteiro menor de z para o novo elemento em y
 		  	for(j=0; j < z->nchaves; j++)       //ajustar filhos de z
 				z->filho[j] = z->filho[j+1];
@@ -292,15 +288,15 @@ TAB *retira(TAB *a,int mat,int t)
 	  
 		if((i > 0) && (!z) && (a->filho[i-1]->nchaves >=t))
 		{ //CASO 3A
-		  	//printf("\nCASO 3A: i igual a nchaves\n");
+		  	printf("\nCASO 3A: i igual a nchaves\n");
 		  	z = a->filho[i-1];
 		 	int j;
 		  	for(j = y->nchaves; j>0; j--)               //encaixar lugar da nova chave
 				y->info[j] = y->info[j-1];
 		  	for(j = y->nchaves+1; j>0; j--)             //encaixar lugar dos filhos da nova chave
 				y->filho[j] = y->filho[j-1];
-			if(y->folha) y->info[0] = z->info[z->nchaves-1];              //dar a y a chave i da arv
-			else y->info[0] = a->info[i-1];
+			if(y->folha) y->info[0] = copiaInfo(z->info[z->nchaves-1]);              //dar a y a chave i da arv
+			else y->info[0] = copiaInfo(a->info[i-1]);
 		  	y->nchaves++;
 		  	a->info[i-1] = y->info[0]; //deve estar bugando aqui
 		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
@@ -310,11 +306,11 @@ TAB *retira(TAB *a,int mat,int t)
 		  	return a;
 		}
 		if(!z){ //CASO 3B	
-			//printf("Entrei no caso 3B");
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
+				printf("Entrei no caso 3B menor que i\n");
 				z = a->filho[i+1];
-				if(!y->folha)y->info[t-1] = a->info[i];     //pegar chave [i] e coloca ao final de filho[i]
-				else y->info[t-1] = z->info[0]; 
+				if(!y->folha)y->info[t-1] = copiaInfo(a->info[i]);     //pegar chave [i] e coloca ao final de filho[i]
+				else y->info[t-1] = copiaInfo(z->info[0]); 
 				y->nchaves++;
 				int j;
 				for(j=z->folha; j < t-1; j++){
@@ -327,7 +323,7 @@ TAB *retira(TAB *a,int mat,int t)
 				  }
 				}
 				for(j=i; j < a->nchaves-1; j++){ //limpar referÃªncias de i
-				  a->info[j] = a->info[j+1];
+				  a->info[j] =copiaInfo(a->info[j+1]);
 				  a->filho[j+1] = a->filho[j+2];
 				}
 				a->nchaves--;
@@ -337,15 +333,16 @@ TAB *retira(TAB *a,int mat,int t)
 				return a;
       		}
 			if((i > 0) && (a->filho[i-1]->nchaves == t-1)){ 
+				printf("Entrei no caso 3B igual a i\n");
 				z = a->filho[i-1];
 				if(i == a->nchaves)
 				{
-					if(!z->folha)z->info[t-1] = a->info[i-1]; //pegar chave[i] e poe ao final de filho[i-1]
-					else z->info[t-1] = y->info[0];
+					if(!z->folha)z->info[t-1] = copiaInfo(a->info[i-1]); //pegar chave[i] e poe ao final de filho[i-1]
+					else z->info[t-1] = copiaInfo(y->info[0]);
 				}
 				else{
 					if(!z->folha) z->info[t-1] = a->info[i];   //pegar chave [i] e poe ao final de filho[i-1]
-					else z->info[t-1] = y->info[0];
+					else z->info[t-1] = copiaInfo(y->info[0]);
 				}
 				z->nchaves++;
 				int j;
@@ -480,6 +477,7 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 	//printf("folha:%d\n",a->folha);
 	if(a->folha)
 	{
+		printf("eh folha");
 		//printf("nchaves: %d\n",a->nchaves);
 		int i;
 		//printf("antes do for:%d\n",a->nchaves);
@@ -511,11 +509,12 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 	return retira(a,mat,t);
 }
 TAB* limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
+	if(!a)return a;
 	while(!a->folha) a=a->filho[0];
 	int i;
-	while(a->prox!=NULL){
+	while(a){
 		for(i=0;i<a->nchaves;i++){
-			if(a->info[i]->CHCS>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) raiz=retira(raiz,a->info[i]->mat,t);
+			if(a->info[i]->NPU>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) raiz=retira_raiz(raiz,a->info[i]->mat,t);
 		}
 		a=a->prox;
 	}
@@ -524,12 +523,12 @@ TAB* limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
 }
 
 TAB* limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c,int t){
+	if(!a)return a;
 	while(!a->folha) a=a->filho[0];
-	
 	int i;
-	while(a->prox!=NULL){
+	while(a){
 		for(i=0;i<a->nchaves;i++){
-			if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS) raiz=retira(raiz,a->info[i]->mat,t);
+			if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS) raiz=retira_raiz(raiz,a->info[i]->mat,t);
 		}
 		a=a->prox;
 	}
@@ -582,7 +581,7 @@ int main (void)
 		else if(i==3){
 			printf("Mat:");
 			scanf("%d",&mat);
-			raiz=retira(raiz,mat,t);
+			raiz=retira_raiz(raiz,mat,t);
 		}
 		else if(i==4){
 			imprime(raiz,0);
@@ -647,6 +646,7 @@ int main (void)
 		printf("Aperte 9 para alterar CR\n");
 		printf("Aperte 10 para alterar NPU\n");
 		printf("Aperte 11 para alterar TRANC\n");
+		printf("Aperte 0 para sair\n");
 		scanf("%d",&i);
 	}
 	libera(raiz);
