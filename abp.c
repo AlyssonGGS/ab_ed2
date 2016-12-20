@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct no
@@ -254,7 +254,6 @@ TAB *retira(TAB *a,int mat,int t)
 			{
 				a->info[j] = a->info[j+1];
 			}
-			//printf("I:%d\n",k);
 			a->nchaves--;
 		}
 		return a;
@@ -275,6 +274,8 @@ TAB *retira(TAB *a,int mat,int t)
 			int j;
 		  	for(j=0; j < z->nchaves-1; j++)  //ajustar chaves de z
 				z->info[j] = z->info[j+1];
+			//limpa memoria
+			free(a->info[i]);
 			a->info[i] = copiaInfo(z->info[0]);     //dar a a uma chave de z
 	  		if(!y->folha) y->filho[y->nchaves] = z->filho[0]; //enviar ponteiro menor de z para o novo elemento em y
 		  	for(j=0; j < z->nchaves; j++)       //ajustar filhos de z
@@ -298,8 +299,10 @@ TAB *retira(TAB *a,int mat,int t)
 			if(y->folha) y->info[0] = copiaInfo(z->info[z->nchaves-1]);              //dar a y a chave i da arv
 			else y->info[0] = copiaInfo(a->info[i-1]);
 		  	y->nchaves++;
-		  	a->info[i-1] = y->info[0]; //deve estar bugando aqui
+			free(a->info[i-1]);
+		  	a->info[i-1] = copiaInfo(y->info[0]); //deve estar bugando aqui
 		  	y->filho[0] = z->filho[z->nchaves];         //enviar ponteiro de z para o novo elemento em y
+			free(z->info[z->nchaves-1]);
 		 	z->nchaves--;
 			z->folha = y->folha;
 		  	a->filho[i] = retira(y, mat, t);
@@ -309,12 +312,21 @@ TAB *retira(TAB *a,int mat,int t)
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
 				printf("Entrei no caso 3B menor que i\n");
 				z = a->filho[i+1];
-				if(!y->folha)y->info[t-1] = copiaInfo(a->info[i]);     //pegar chave [i] e coloca ao final de filho[i]
-				else y->info[t-1] = copiaInfo(z->info[0]); 
+				if(!y->folha)
+				{
+					y->info[t-1] = copiaInfo(a->info[i]);     //pegar chave [i] e coloca ao final de filho[i]
+					free(a->info[i]);
+				}
+				else 
+				{
+					y->info[t-1] = copiaInfo(z->info[0]);
+					free(z->info[0]);
+				}
 				y->nchaves++;
 				int j;
 				for(j=z->folha; j < t-1; j++){
-				  y->info[t+(j-y->folha)] = z->info[j];     //passar filho[i+1] para filho[i]
+				  y->info[t+(j-y->folha)] = copiaInfo(z->info[j]);  
+				  free(z->info[j]);//passar filho[i+1] para filho[i]
 				  y->nchaves++;
 				}
 				if(!y->folha){
@@ -323,11 +335,12 @@ TAB *retira(TAB *a,int mat,int t)
 				  }
 				}
 				for(j=i; j < a->nchaves-1; j++){ //limpar referÃªncias de i
-				  a->info[j] =copiaInfo(a->info[j+1]);
+				  a->info[j] = a->info[j+1];
 				  a->filho[j+1] = a->filho[j+2];
 				}
 				a->nchaves--;
 				y->folha = z->folha;
+				//corrige o caso da árvore virar raiz
 				if(a->nchaves == 0) a = a->filho[0];
 				a = retira(a, mat, t);
 				return a;
@@ -396,7 +409,10 @@ int selecionaCurriculo(int cht)
 
 TAB *preenche(TAB *a,char *arq,int t,TCur *curs)
 {
-	FILE *fp = fopen(arq,"rt");
+	char nome[30];
+	printf("Insira o nome do arquivo de preenchimento:\n");
+	scanf("%s",nome);
+	FILE *fp = fopen(nome,"rt");
 	if(!fp)
 	{
 		printf("arquivo não aberto com sucesso");
