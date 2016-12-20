@@ -508,6 +508,22 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 	//printf("nao estou removendo da raiz\n");
 	return retira(a,mat,t);
 }
+
+TAB *limpaFormandos(TAB *a, TCur *c, int t)
+{
+	if(!a)return a;
+	TAB *aux = a;
+	while(!aux->folha)aux = aux->filho[0];
+	int i;
+	while(aux)
+	{
+		for(i = 0; i < aux->nchaves; i++)
+			if(aux->info[i]->CHCS >= c[aux->info[i]->cur].cht && aux->info[i]->NPU <= c[aux->info[i]->cur].ntotper) a =retira_raiz(a,aux->info[i]->mat,t);
+		aux=aux->prox;
+	}
+	return a;
+}
+
 TAB* limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
 	if(!a)return a;
 	while(!a->folha) a=a->filho[0];
@@ -555,10 +571,11 @@ int main (void)
 	printf("Aperte 5 para buscar e imprimir um aluno\n");	
 	printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
 	printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
-	printf("Aperte 8 para alterar CHCS\n");
-	printf("Aperte 9 para alterar CR\n");
-	printf("Aperte 10 para alterar NPU\n");
-	printf("Aperte 11 para alterar TRANC\n");
+	printf("Aperte 8 para limpeza dos formandos\n");
+	printf("Aperte 9 para alterar CHCS\n");
+	printf("Aperte 10 para alterar CR\n");
+	printf("Aperte 11 para alterar NPU\n");
+	printf("Aperte 12 para alterar TRANC\n");
 	scanf("%d",&i);
 	//loop para operar o programa
 	while(i != 0)
@@ -575,7 +592,7 @@ int main (void)
 			printf("\nCurriculo:");
 			scanf("%d",&cur);
 			printf("\nNome:");
-			scanf("%s",nome);
+    		scanf("%s",nome);
 			raiz=insere(raiz,mat,cr,cur,nome,t);	
 		}
 		else if(i==3){
@@ -598,6 +615,9 @@ int main (void)
 			raiz=limpaNTORPEReNao100CHT(raiz,raiz,curriculos,t);
 		}
 		else if(i==8){
+			raiz=limpaFormandos(raiz,curriculos,t);
+		}
+		else if(i==9){
 			
 			printf("Mat:");
 			scanf("%d",&mat);
@@ -605,7 +625,7 @@ int main (void)
 			scanf("%d",&aux);
 			alteraCHCS(raiz,mat,aux);
 		}
-		else if(i==9){
+		else if(i==10){
 			
 			printf("Mat:");
 			scanf("%d",&mat);
@@ -615,7 +635,7 @@ int main (void)
 			alteraCR(raiz,mat,auxF);
 		
 		}
-		else if(i==10){
+		else if(i==11){
 			
 			printf("Mat:");
 			scanf("%d",&mat);
@@ -625,7 +645,7 @@ int main (void)
 			alteraNPU(raiz,mat,aux);
 		
 		}
-		else if(i==11){
+		else if(i==12){
 			
 			printf("Mat:");
 			scanf("%d",&mat);
@@ -633,7 +653,6 @@ int main (void)
 			printf("Novo Tranc:");
 			scanf("%d",&aux);
 			alteraTRANC(raiz,mat,aux);
-		
 		}
 		printf("Aperte 1 para encher a arvore\n");
 		printf("Aperte 2 para inserir um valor\n");
@@ -642,10 +661,11 @@ int main (void)
 		printf("Aperte 5 para buscar e imprimir um aluno\n");	
 		printf("Aperte 6 para limpeza 1(nao atingiu 50 Porcento do cht no final do tempo)\n");
 		printf("Aperte 7 para limpeza 2(nao atingiu 100 Porcento do cht no maximo de periodos)\n");
-		printf("Aperte 8 para alterar CHCS\n");
-		printf("Aperte 9 para alterar CR\n");
-		printf("Aperte 10 para alterar NPU\n");
-		printf("Aperte 11 para alterar TRANC\n");
+		printf("Aperte 8 para limpeza dos formandos\n");
+		printf("Aperte 9 para alterar CHCS\n");
+		printf("Aperte 10 para alterar CR\n");
+		printf("Aperte 11 para alterar NPU\n");
+		printf("Aperte 12 para alterar TRANC\n");
 		printf("Aperte 0 para sair\n");
 		scanf("%d",&i);
 	}
