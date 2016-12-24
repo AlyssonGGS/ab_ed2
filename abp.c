@@ -44,15 +44,20 @@ void libera(TAB *a)
 		for(i = 0; i < a->nchaves + 1;i++)
 		{
 			libera(a->filho[i]);
-			//free(a->filho[i]);
+			free(a->filho[i]);
 		}
 		for(i = 0; i < a->nchaves;i++)
 		{
-			free(a->info[i]->nome);
-			free(a->info[i]);
+			liberaInfo(a->info[i]);
 		}
 		free(a);
 	}
+}
+
+void liberaInfo(TInfo *a)
+{
+	free(a->info[i]->nome);
+	free(a->info[i]);
 }
 //está dando erro ao inserir primeiro elemento
 TAB *cria_no(int t)
@@ -173,6 +178,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 		for(j = 0; j < t; j++)
 		{
 			c->info[j] = copiaInfo(a->info[(t-1) + j]);
+			liberaInfo(a->info[(t-1) + j]);
 			c->nchaves++;
 			a->nchaves--;
 		}
@@ -184,6 +190,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 		for(j =0; j < t-1;j++)
 		{
 			c->info[j] = copiaInfo(a->info[t+j]);
+			liberaInfo(a->info[t+ j]);
 			c->nchaves++;
 		}
 		for(j = t; j <= a->nchaves;j++)
