@@ -35,6 +35,12 @@ TAB *inicializa()
 	return NULL;
 }
 
+void liberaInfo(TInfo *a)
+{
+	free(a->nome);
+	free(a);
+}
+
 void libera(TAB *a)
 {
 	if(a)
@@ -54,11 +60,6 @@ void libera(TAB *a)
 	}
 }
 
-void liberaInfo(TInfo *a)
-{
-	free(a->info[i]->nome);
-	free(a->info[i]);
-}
 //está dando erro ao inserir primeiro elemento
 TAB *cria_no(int t)
 {
@@ -100,7 +101,7 @@ void imprime(TAB *a, int andar){
     for(i=0; i<=a->nchaves-1; i++){
       	imprime(a->filho[i],andar+1);
       	for(j=0; j<=andar; j++) printf("   ");
-      		printf("%d\n",a->info[i]->mat);
+      		printf("%d:%d\n",a->info[i]->mat,a->folha);
    	 	}
     	imprime(a->filho[i],andar+1);
 	}
@@ -171,6 +172,7 @@ TAB *divide(TAB *b,int i, TAB *a, int t)
 	b->info[i] = copiaInfo(a->info[t-1]);
 	b->filho[i+1] = c;
 	b->nchaves++;
+	
 	if(a->folha)
 	{
 		c->folha = 1;
@@ -222,6 +224,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
    		a = divide(a, i, a->filho[i], t);
    	 	if(mat>a->info[i]->mat) i++;
   	}
+	//chama a inserção no filho onde pode estar
   	a->filho[i] = insere_incompleto(a->filho[i], mat,cr,cur, nome, t);
 	return a;
 }
