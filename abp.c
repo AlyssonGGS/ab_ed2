@@ -220,7 +220,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
 	//como achou a info, corrigi o i para apontar para o filho, ou seja, incrementa 1
   	i++;
   	if(a->filho[i]->nchaves == ((2*t)-1)){
-		printf("serio que entrou aqui?");
+		//printf("serio que entrou aqui?");
    		a = divide(a, i, a->filho[i], t);
    	 	if(mat>a->info[i]->mat) i++;
   	}
@@ -232,7 +232,7 @@ TAB *insere_incompleto(TAB *a, int mat, float cr, int cur, char *nome, int t)
 TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 {
 	if(busca(raiz,mat))return raiz;
-	printf("busquei por %d\n",mat);
+	//printf("busquei por %d\n",mat);
 	if(!raiz) 
 	{
 		raiz = cria_no(t);
@@ -248,7 +248,7 @@ TAB *insere(TAB *raiz, int mat, float cr, int cur, char *nome, int t)
 		b->nchaves=0;
 		b->folha = 0;
 		b->filho[0] = raiz;
-		printf("dividindo a raiz");
+		//printf("dividindo a raiz");
 		b = divide(b,0,raiz,t);
 		b = insere_incompleto(b,mat,cr,cur, nome,t);	
 		return b;
@@ -277,7 +277,7 @@ TAB *retira(TAB *a,int mat,int t)
 				}
 			}
 			if(k >= a->nchaves) return a;
-			printf("CASO 1");
+			//printf("CASO 1");
 			int j;
 			for(j = k; j < a->nchaves;j++)
 			{
@@ -294,7 +294,7 @@ TAB *retira(TAB *a,int mat,int t)
  	{ 	//CASOS 3A e 3B
 		if((i < a->nchaves) && (a->filho[i+1]->nchaves >=t))
 		{ //CASO 3A
-		  	printf("\nCASO 3A: i menor que nchaves\n");
+		  	//printf("\nCASO 3A: i menor que nchaves\n");
 			z = a->filho[i+1];
 			if (y->folha) y->info[t-1] = copiaInfo(z->info[0]);		  
 			else y->info[t-1] = copiaInfo(a->info[i]);
@@ -327,7 +327,7 @@ TAB *retira(TAB *a,int mat,int t)
 	  
 		if((i > 0) && (!z) && (a->filho[i-1]->nchaves >=t))
 		{ //CASO 3A
-		  	printf("\nCASO 3A: i igual a nchaves\n");
+		  	//printf("\nCASO 3A: i igual a nchaves\n");
 		  	z = a->filho[i-1];
 		 	int j;
 		  	for(j = y->nchaves; j>0; j--)               //encaixar lugar da nova chave
@@ -347,7 +347,7 @@ TAB *retira(TAB *a,int mat,int t)
 		}
 		if(!z){ //CASO 3B	
       		if(i < a->nchaves && a->filho[i+1]->nchaves == t-1){
-				printf("Entrei no caso 3B menor que i\n");
+				//printf("Entrei no caso 3B menor que i\n");
 				z = a->filho[i+1];
 				if(!y->folha)y->info[t-1] = copiaInfo(a->info[i]);     //pegar chave [i] e coloca ao final de filho[i]
 				else y->info[t-1] = copiaInfo(z->info[0]); 
@@ -373,7 +373,7 @@ TAB *retira(TAB *a,int mat,int t)
 				return a;
       		}
 			if((i > 0) && (a->filho[i-1]->nchaves == t-1)){ 
-				printf("Entrei no caso 3B igual a i\n");
+				//printf("Entrei no caso 3B igual a i\n");
 				z = a->filho[i-1];
 				if(!z->folha)z->info[t-1] = copiaInfo(a->info[i-1]); //pegar chave[i] e poe ao final de filho[i-1]
 				else z->info[t-1] = copiaInfo(y->info[0]);
@@ -518,7 +518,7 @@ TAB* retira_raiz(TAB*a,int mat,int t){
 	//printf("folha:%d\n",a->folha);
 	if(a->folha)
 	{
-		printf("eh folha");
+		//printf("eh folha");
 		//printf("nchaves: %d\n",a->nchaves);
 		int i;
 		//printf("antes do for:%d\n",a->nchaves);
@@ -556,10 +556,15 @@ TAB *limpaFormandos(TAB *a, TCur *c, int t)
 	TAB *aux = a;
 	while(!aux->folha)aux = aux->filho[0];
 	int i;
+	
+	printf("\n");
 	while(aux)
 	{
 		for(i = 0; i < aux->nchaves; i++)
-			if(aux->info[i]->CHCS >= c[aux->info[i]->cur].cht && aux->info[i]->NPU <= c[aux->info[i]->cur].ntotper) a =retira_raiz(a,aux->info[i]->mat,t);
+			if(aux->info[i]->CHCS >= c[aux->info[i]->cur].cht && aux->info[i]->NPU <= c[aux->info[i]->cur].ntotper) {
+				printf("Limpei %d\n",aux->info[i]->mat);
+				a =retira_raiz(a,aux->info[i]->mat,t);	
+			}
 		aux=aux->prox;
 	}
 	return a;
@@ -569,10 +574,14 @@ TAB* limpaTNCcom50cht(TAB *raiz,TAB *a,TCur *c,int t){
 	if(!a)return a;
 	while(!a->folha) a=a->filho[0];
 	int i;
+	printf("\n");
 	while(a){
 		for(i=0;i<a->nchaves;i++){
-			if(a->info[i]->NPU>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) raiz=retira_raiz(raiz,a->info[i]->mat,t);
-		}
+			if(a->info[i]->NPU>=c[a->info[i]->cur].tnc && a->info[i]->CHCS<c[a->info[i]->cur].cht/2) {
+			
+				printf("Limpei %d\n",a->info[i]->mat);
+				raiz=retira_raiz(raiz,a->info[i]->mat,t);
+		}	}
 		a=a->prox;
 	}
 
@@ -583,9 +592,14 @@ TAB* limpaNTORPEReNao100CHT(TAB *raiz,TAB *a,TCur *c,int t){
 	if(!a)return a;
 	while(!a->folha) a=a->filho[0];
 	int i;
+	printf("\n");
 	while(a){
 		for(i=0;i<a->nchaves;i++){
-			if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS) raiz=retira_raiz(raiz,a->info[i]->mat,t);
+			if(c[a->info[i]->cur].ntotper<=a->info[i]->NPU && c[a->info[i]->cur].cht>a->info[i]->CHCS)  {
+			
+				printf("Limpei %d\n",a->info[i]->mat);
+				raiz=retira_raiz(raiz,a->info[i]->mat,t);
+			}
 		}
 		a=a->prox;
 	}
