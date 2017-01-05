@@ -35,6 +35,7 @@ TAB *inicializa()
 	return NULL;
 }
 
+
 void liberaInfo(TInfo *a)
 {
 	free(a->nome);
@@ -50,7 +51,7 @@ void libera(TAB *a)
 		for(i = 0; i < a->nchaves + 1;i++)
 		{
 			libera(a->filho[i]);
-			free(a->filho[i]);
+			//free(a->filho[i]);
 		}
 		for(i = 0; i < a->nchaves;i++)
 		{
@@ -112,6 +113,7 @@ TAB *busca(TAB *raiz, int x)
 	if(!raiz)return raiz;
 	int i = 0;
 	while(i < raiz->nchaves && x > raiz->info[i]->mat) i++;
+	if(raiz->folha==0 && raiz->info[i] && x==raiz->info[i]->mat && i < raiz->nchaves ) i++;
 	if(raiz->folha && raiz->info[i] &&i <=raiz->nchaves && x == raiz->info[i]->mat) return raiz;
 	return busca(raiz->filho[i],x);
 }
